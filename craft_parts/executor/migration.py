@@ -90,9 +90,13 @@ def migrate_files(
             migrated_files.add(str(oci_opaque_marker))
 
     for filename in sorted(files):
+
         src = srcdir / filename
         dst = destdir / filename
 
+        interest = src.name == "5.34"
+        if interest:
+            logger.info(f"gboutry interest src_exists={src.exists()}, dst_is_symlink={dst.is_symlink()}")
         if not src.exists():
             # If migrating a whited out file from stage (OCI) using layer (overlayfs)
             # as reference, use the OCI whiteout file names.
@@ -114,12 +118,16 @@ def migrate_files(
         # in destination and add it to the list of migrated files so it can be removed
         # when cleaning.
         if oci_translation and _is_whiteout_file(src):
+            if interest:
+                logger.info("gboutry interest whiteout")
             oci_whiteout = overlays.oci_whiteout(Path(filename))
             oci_dst = Path(destdir, oci_whiteout)
             logger.debug("create OCI whiteout file '%s'", str(oci_dst))
             oci_dst.touch()
             migrated_files.add(str(oci_whiteout))
         else:
+            if interest:
+                logger.info("gboutry interest link or copy")
             file_utils.link_or_copy(
                 str(src),
                 str(dst),
